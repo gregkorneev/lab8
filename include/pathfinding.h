@@ -5,23 +5,26 @@
 #include <string>
 #include "grid.h"
 
-// Метрики пути для анализа по ТЗ
+// Метрики пути по ТЗ
 struct PathMetrics {
-    double L_found;       // длина найденного пути
-    double L_opt;         // оптимальная длина (по Dijkstra)
-    double KO;            // коэффициент оптимальности
-    double OO_percent;    // отклонение от оптимального, %
+    double L_found;        // длина найденного пути
+    double L_opt;          // оптимальная длина (Dijkstra)
+    double KO;             // коэффициент оптимальности
+    double OO_percent;     // отклонение от оптимального, %
 
-    int closedCount;      // количество раскрытых узлов
+    int    closedCount;    // количество раскрытых узлов
 
-    double EP;            // вычислительная эффективность (L_opt / closedCount)
-    double FV;            // фактор ветвления
+    double EP;             // эффективность поиска (L_opt / N_раскрытых)
+    double FV;             // фактор ветвления
 
-    double SUP;           // суммарный угол поворотов
-    double GP;            // гладкость пути
+    double SUP;            // суммарный угол поворотов
+    double GP;             // гладкость пути
 
-    double minObsDist;    // минимальное расстояние до препятствия
-    double avgObsDist;    // среднее расстояние до препятствий
+    double minObsDist;     // минимальное расстояние до препятствия
+    double avgObsDist;     // среднее расстояние до препятствий
+
+    double curvature;      // суммарная кривизна пути
+    double heurError;      // точность эвристики (RMSE)
 };
 
 // Классический A*
@@ -41,27 +44,27 @@ void smoothPath(const std::vector<std::string> &grid,
                 const std::vector<Cell> &in,
                 std::vector<Cell> &out);
 
-// Длина пути в "геометрическом" смысле
+// Длина пути в геометрическом смысле
 double pathLength(const std::vector<Cell> &path);
 
-// --------- Доп. функции для метрик ---------
+// --- Вспомогательные функции для метрик ---
 
-// Посчитать оптимальную длину пути (Dijkstra)
-// Возвращает true, если путь найден, и пишет длину в L_opt.
+// Оптимальная длина пути (Dijkstra), true если путь найден
 bool computeOptimalPathLength(const std::vector<std::string> &grid,
                               Cell start, Cell goal,
                               double &L_opt);
 
-// Посчитать гладкость (SUP и GP) по ломаной траектории
+// Гладкость, суммарный угол поворотов и кривизна
 void computeSmoothness(const std::vector<Cell> &path,
-                       double &SUP, double &GP);
+                       double &SUP, double &GP,
+                       double &curvature);
 
-// Посчитать минимальное и среднее расстояние до препятствий вдоль пути
+// Расстояния до препятствий
 void computeObstacleDistances(const std::vector<std::string> &grid,
                               const std::vector<Cell> &path,
                               double &minDist, double &avgDist);
 
-// Заполнить все метрики по ТЗ
+// Заполнить все метрики
 void fillMetrics(const std::vector<std::string> &grid,
                  Cell start, Cell goal,
                  const std::vector<Cell> &finalPath,

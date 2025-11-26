@@ -28,6 +28,12 @@ int main() {
     // Случайная генерация леса с очагами пожара и зарослями
     generateRandomMap(h, w, grid, start, goal);
 
+    std::cout << "Сгенерированная карта леса (S - вы, G - безопасная зона, # - огонь/заросли):\n";
+    for (const auto &row : grid) {
+        std::cout << row << "\n";
+    }
+    std::cout << "\n";
+
     std::cout << "Выберите алгоритм поиска пути:\n";
     std::cout << "1 — A*\n";
     std::cout << "2 — A* с пост-сглаживанием (A*PS)\n";
@@ -63,10 +69,7 @@ int main() {
         return 0;
     }
 
-    // Выбираем финальный путь (для A*PS — уже сглаженный)
-    const std::vector<Cell> &finalPath =
-        (choice == 2 ? smooth : path);
-
+    const std::vector<Cell> &finalPath = (choice == 2 ? smooth : path);
     double L_found = pathLength(finalPath);
 
     if (choice == 2) {
@@ -75,13 +78,14 @@ int main() {
         std::cout << "После сглаживания: " << smooth.size()
                   << " точек, длина = " << L_found << "\n";
         std::cout << "Количество раскрытых узлов (A*): " << closedCount << "\n\n";
-        printMapWithPath(grid, finalPath);
     } else {
         std::cout << "Длина пути (клетки): " << finalPath.size()
                   << ", геометрическая длина = " << L_found << "\n";
         std::cout << "Количество раскрытых узлов: " << closedCount << "\n\n";
-        printMapWithPath(grid, finalPath);
     }
+
+    std::cout << "Карта ( '*' — найденный безопасный путь через лес ):\n";
+    printMapWithPath(grid, finalPath);
 
     // Сохраняем карту и путь в CSV
     saveMapAndPathToCsv(grid, finalPath, "forest_path.csv");
@@ -102,8 +106,10 @@ int main() {
     std::cout << "Фактор ветвления FV:             " << metrics.FV << "\n";
     std::cout << "Суммарный угол поворотов SUP:    " << metrics.SUP << "\n";
     std::cout << "Гладкость пути GP:               " << metrics.GP << "\n";
+    std::cout << "Суммарная кривизна пути:         " << metrics.curvature << "\n";
     std::cout << "Мин. расстояние до препятствий:  " << metrics.minObsDist << "\n";
     std::cout << "Сред. расстояние до препятствий: " << metrics.avgObsDist << "\n";
+    std::cout << "RMSE эвристики (точность ТЭ):    " << metrics.heurError << "\n";
 
     // Сохраняем метрики в CSV
     saveMetricsToCsv(algorithmName, h, w, metrics);
