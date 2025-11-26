@@ -26,4 +26,9 @@ void generateRandomMap(int h, int w,
 void printMapWithPath(std::vector<std::string> grid,
                       const std::vector<Cell> &path);
 
+// Сохранение карты и пути в CSV (data/csv/...)
+void saveMapAndPathToCsv(const std::vector<std::string> &grid,
+                         const std::vector<Cell> &path,
+                         const std::string &filename);
+
 #endif // GRID_H

@@ -1,6 +1,8 @@
 #include "grid.h"
 #include <iostream>
 #include <random>
+#include <fstream>
+#include <filesystem>
 
 bool inBounds(int y, int x, int h, int w) {
     return y >= 0 && y < h && x >= 0 && x < w;
@@ -17,7 +19,7 @@ void generateRandomMap(int h, int w,
                        Cell &start, Cell &goal) {
     grid.assign(h, std::string(w, '.'));
 
-    // Старт и цель фиксируем в углах (чтобы точно были на карте)
+    // Старт и цель в углах
     start.y = 0;
     start.x = 0;
     goal.y = h - 1;
@@ -58,9 +60,9 @@ void generateRandomMap(int h, int w,
 
 void printMapWithPath(std::vector<std::string> grid,
                       const std::vector<Cell> &path) {
-    for (size_t i = 0; i < path.size(); ++i) {
-        int y = path[i].y;
-        int x = path[i].x;
+    for (const auto &c : path) {
+        int y = c.y;
+        int x = c.x;
         if (grid[y][x] == 'S' || grid[y][x] == 'G')
             continue;
         grid[y][x] = '*';
@@ -70,4 +72,48 @@ void printMapWithPath(std::vector<std::string> grid,
     for (size_t i = 0; i < grid.size(); ++i) {
         std::cout << grid[i] << "\n";
     }
+}
+
+// Сохранение карты и пути в CSV
+void saveMapAndPathToCsv(const std::vector<std::string> &grid,
+                         const std::vector<Cell> &path,
+                         const std::string &filename)
+{
+    namespace fs = std::filesystem;
+
+    int h = (int)grid.size();
+    if (h == 0) return;
+    int w = (int)grid[0].size();
+
+    // Помечаем клетки, которые лежат на пути
+    std::vector<std::vector<int>> onPath(h, std::vector<int>(w, 0));
+    for (const auto &c : path) {
+        if (c.y >= 0 && c.y < h && c.x >= 0 && c.x < w) {
+            onPath[c.y][c.x] = 1;
+        }
+    }
+
+    // Создаём каталоги data/csv
+    fs::create_directories("data/csv");
+
+    std::string fullName = "data/csv/" + filename;
+    std::ofstream out(fullName);
+    if (!out.is_open()) {
+        std::cerr << "Не удалось открыть файл для записи: " << fullName << "\n";
+        return;
+    }
+
+    // Заголовок
+    out << "row,col,cell,is_path\n";
+
+    // Строки таблицы
+    for (int y = 0; y < h; ++y) {
+        for (int x = 0; x < w; ++x) {
+            char cell = grid[y][x]; // '.', '#', 'S', 'G'
+            int isP = onPath[y][x]; // 0 или 1
+            out << y << "," << x << "," << cell << "," << isP << "\n";
+        }
+    }
+
+    std::cout << "\nРезультат сохранён в CSV: " << fullName << "\n";
 }

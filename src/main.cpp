@@ -65,12 +65,18 @@ int main() {
         std::cout << "После сглаживания: " << smooth.size()
                   << " точек, длина = " << pathLength(smooth) << "\n";
         std::cout << "Количество раскрытых узлов (A*): " << closedCount << "\n\n";
+
         printMapWithPath(grid, smooth);
+        // сохраняем карту и сглаженный путь в CSV
+        saveMapAndPathToCsv(grid, smooth, "forest_path.csv");
     } else {
         std::cout << "Длина пути (клетки): " << path.size()
                   << ", геометрическая длина = " << pathLength(path) << "\n";
         std::cout << "Количество раскрытых узлов: " << closedCount << "\n\n";
+
         printMapWithPath(grid, path);
+        // сохраняем карту и путь в CSV
+        saveMapAndPathToCsv(grid, path, "forest_path.csv");
     }
 
     return 0;
