@@ -1,79 +1,69 @@
-#ifndef PATHFINDING_H
-#define PATHFINDING_H
+#pragma once
 
 #include <vector>
 #include <string>
-#include "grid.h"
 
-// Метрики пути по ТЗ
+#include "grid.h"  // здесь уже объявлены struct Cell и printMapWithPath
+
+// Метрики качества маршрута
 struct PathMetrics {
-    double L_found;        // длина найденного пути
-    double L_opt;          // оптимальная длина (Dijkstra)
-    double KO;             // коэффициент оптимальности
-    double OO_percent;     // отклонение от оптимального, %
+    double L_opt      = 0.0;  // оптимальная длина (Dijkstra)
+    double L_found    = 0.0;  // найденная длина
+    double KO         = 0.0;  // коэффициент оптимальности
+    double OO_percent = 0.0;  // отклонение от оптимального, %
+    int    closedCount = 0;   // число раскрытых узлов
 
-    int    closedCount;    // количество раскрытых узлов
+    double EP         = 0.0;  // эффективность поиска
+    double FV         = 0.0;  // фактор ветвления
+    double SUP        = 0.0;  // суммарный угол поворотов
+    double GP         = 0.0;  // гладкость пути
+    double curvature  = 0.0;  // кривизна траектории
 
-    double EP;             // эффективность поиска (L_opt / N_раскрытых)
-    double FV;             // фактор ветвления
+    double minObsDist = 0.0;  // минимальное расстояние до препятствий
+    double avgObsDist = 0.0;  // среднее расстояние до препятствий
 
-    double SUP;            // суммарный угол поворотов
-    double GP;             // гладкость пути
-
-    double minObsDist;     // минимальное расстояние до препятствия
-    double avgObsDist;     // среднее расстояние до препятствий
-
-    double curvature;      // суммарная кривизна пути
-    double heurError;      // точность эвристики (RMSE)
+    double heurError  = 0.0;  // RMSE эвристики (точность эвристики)
 };
 
-// Классический A*
-bool aStar(const std::vector<std::string> &grid,
+// --- Алгоритмы поиска пути ---
+
+bool aStar(const std::vector<std::string>& grid,
            Cell start, Cell goal,
-           std::vector<Cell> &path,
-           int &closedCount);
+           std::vector<Cell>& outPath,
+           int& outClosedCount);
 
-// Theta* (any-angle поиск)
-bool thetaStar(const std::vector<std::string> &grid,
+bool thetaStar(const std::vector<std::string>& grid,
                Cell start, Cell goal,
-               std::vector<Cell> &path,
-               int &closedCount);
+               std::vector<Cell>& outPath,
+               int& outClosedCount);
 
-// Сглаживание пути (A*PS)
-void smoothPath(const std::vector<std::string> &grid,
-                const std::vector<Cell> &in,
-                std::vector<Cell> &out);
+// Пост-сглаживание пути
+void smoothPath(const std::vector<std::string>& grid,
+                const std::vector<Cell>& inPath,
+                std::vector<Cell>& outSmooth);
 
-// Длина пути в геометрическом смысле
-double pathLength(const std::vector<Cell> &path);
+// Длина пути
+double pathLength(const std::vector<Cell>& path);
 
-// --- Вспомогательные функции для метрик ---
+// Сохранение карты и пути в CSV
+void saveMapAndPathToCsv(const std::vector<std::string>& grid,
+                         const std::vector<Cell>& path,
+                         const std::string& filename);
 
-// Оптимальная длина пути (Dijkstra), true если путь найден
-bool computeOptimalPathLength(const std::vector<std::string> &grid,
-                              Cell start, Cell goal,
-                              double &L_opt);
+// Расчёт ошибки эвристики (RMSE) для одной карты
+double computeHeuristicError(const std::vector<std::string>& grid,
+                             Cell goal);
 
-// Гладкость, суммарный угол поворотов и кривизна
-void computeSmoothness(const std::vector<Cell> &path,
-                       double &SUP, double &GP,
-                       double &curvature);
-
-// Расстояния до препятствий
-void computeObstacleDistances(const std::vector<std::string> &grid,
-                              const std::vector<Cell> &path,
-                              double &minDist, double &avgDist);
-
-// Заполнить все метрики
-void fillMetrics(const std::vector<std::string> &grid,
+// Заполнение структуры метрик
+void fillMetrics(const std::vector<std::string>& grid,
                  Cell start, Cell goal,
-                 const std::vector<Cell> &finalPath,
+                 const std::vector<Cell>& finalPath,
                  int closedCount,
-                 PathMetrics &m);
+                 double heurError,
+                 PathMetrics& m);
 
-// Сохранить метрики в CSV (data/csv/metrics.csv)
-void saveMetricsToCsv(const std::string &algorithmName,
-                      int h, int w,
-                      const PathMetrics &m);
-
-#endif // PATHFINDING_H
+// Сохранение метрик в CSV
+void saveMetricsToCsv(const std::string& algorithmName,
+                      int height, int width,
+                      const PathMetrics& m,
+                      int runIndex);

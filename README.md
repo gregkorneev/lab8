@@ -10,9 +10,14 @@
 Полная команда сборки, запуска алгоритма и построения визуализации в одну строку:
 
 ```bash
-rm -rf build && rm -rf data && cmake -B build && cmake --build build && ./build/lab8 | tee build/run_output.txt && python3 .py/save_run_log_from_build.py && python3 .py/plot_forest_path.py
+rm -rf build && rm -rf data && cmake -B build && cmake --build build && ./build/lab8 | tee build/run_output.txt
 
 ```
+```bash
+python3 .py/save_run_log_from_build.py && python3 .py/plot_forest_path.py
+
+```
+
 ---
 
 ## 📌 Описание проекта
@@ -56,9 +61,7 @@ rm -rf build && rm -rf data && cmake -B build && cmake --build build && ./build/
 data/csv/forest_path.csv
 data/png/forest_path.png
 
-
 CSV содержит строки:
-
 row,col,cell,is_path
 0,0,S,1
 0,1,.,1

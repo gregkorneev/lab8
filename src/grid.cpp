@@ -4,10 +4,12 @@
 #include <fstream>
 #include <filesystem>
 
+// Проверка выхода за границы
 bool inBounds(int y, int x, int h, int w) {
     return y >= 0 && y < h && x >= 0 && x < w;
 }
 
+// Клетка проходима?
 bool isFree(const std::vector<std::string> &grid, int y, int x) {
     char c = grid[y][x];
     return c == '.' || c == 'S' || c == 'G';
@@ -16,22 +18,24 @@ bool isFree(const std::vector<std::string> &grid, int y, int x) {
 // Генерация случайной карты леса при пожаре
 void generateRandomMap(int h, int w,
                        std::vector<std::string> &grid,
-                       Cell &start, Cell &goal) {
+                       Cell &start, Cell &goal)
+{
+    // Изначально вся карта свободна
     grid.assign(h, std::string(w, '.'));
 
-    // Старт и цель в углах
+    // Старт и цель в противоположных углах
     start.y = 0;
     start.x = 0;
-    goal.y = h - 1;
-    goal.x = w - 1;
+    goal.y  = h - 1;
+    goal.x  = w - 1;
 
     grid[start.y][start.x] = 'S';
-    grid[goal.y][goal.x] = 'G';
+    grid[goal.y][goal.x]   = 'G';
 
-    // Настройки "сложности" карты
-    double fireProb = 0.15;   // вероятность очага пожара
-    double bushProb = 0.10;   // вероятность непроходимых зарослей
-    double blockProb = fireProb + bushProb;
+    // Плотность огня/зарослей
+    double fireProb  = 0.15;   // вероятность очага пожара
+    double bushProb  = 0.10;   // вероятность непроходимых зарослей
+    double blockProb = fireProb + bushProb; // итоговая доля препятствий
 
     std::random_device rd;
     std::mt19937 rng(rd());
@@ -39,27 +43,27 @@ void generateRandomMap(int h, int w,
 
     for (int y = 0; y < h; ++y) {
         for (int x = 0; x < w; ++x) {
+            // Не блокируем старт и цель
             if ((y == start.y && x == start.x) ||
-                (y == goal.y && x == goal.x)) {
-                continue; // не блокируем старт и цель
+                (y == goal.y  && x == goal.x)) {
+                continue;
             }
 
             double r = dist(rng);
             if (r < blockProb) {
-                grid[y][x] = '#'; // огонь/заросли
+                grid[y][x] = '#'; // огонь/заросли (непроходимо)
             }
         }
     }
-
-    std::cout << "Сгенерированная карта леса (S - вы, G - безопасная зона, # - огонь/заросли):\n";
-    for (int y = 0; y < h; ++y) {
-        std::cout << grid[y] << "\n";
-    }
-    std::cout << "\n";
+    // ВАЖНО: здесь ничего не печатаем.
+    // Печать карты делается в main.cpp (run_single / run_batch),
+    // чтобы не забивать вывод при серии запусков.
 }
 
+// Печать карты с отмеченным путём
 void printMapWithPath(std::vector<std::string> grid,
-                      const std::vector<Cell> &path) {
+                      const std::vector<Cell> &path)
+{
     for (const auto &c : path) {
         int y = c.y;
         int x = c.x;
@@ -69,8 +73,8 @@ void printMapWithPath(std::vector<std::string> grid,
     }
 
     std::cout << "Карта ( '*' — найденный безопасный путь через лес ):\n";
-    for (size_t i = 0; i < grid.size(); ++i) {
-        std::cout << grid[i] << "\n";
+    for (const auto &row : grid) {
+        std::cout << row << "\n";
     }
 }
 
@@ -110,7 +114,7 @@ void saveMapAndPathToCsv(const std::vector<std::string> &grid,
     for (int y = 0; y < h; ++y) {
         for (int x = 0; x < w; ++x) {
             char cell = grid[y][x]; // '.', '#', 'S', 'G'
-            int isP = onPath[y][x]; // 0 или 1
+            int isP   = onPath[y][x]; // 0 или 1
             out << y << "," << x << "," << cell << "," << isP << "\n";
         }
     }

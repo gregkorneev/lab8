@@ -12,7 +12,6 @@ const double INF = 1e18;
 
 // --------- Общие вспомогательные штуки ---------
 
-// Для A*
 struct Node {
     int y;
     int x;
@@ -26,7 +25,6 @@ struct NodeCmp {
     }
 };
 
-// Евклидово расстояние
 static double distCells(int y1, int x1, int y2, int x2) {
     double dy = double(y1 - y2);
     double dx = double(x1 - x2);
@@ -98,7 +96,7 @@ static void reconstructPath(const std::vector<std::vector<Cell>> &parent,
     while (!(cur.y == start.y && cur.x == start.x)) {
         path.push_back(cur);
         Cell p = parent[cur.y][cur.x];
-        if (p.y == -1) { // пути нет
+        if (p.y == -1) {
             path.clear();
             return;
         }
@@ -342,7 +340,6 @@ void computeSmoothness(const std::vector<Cell> &path,
 
     if (path.size() < 3) return;
 
-    // Углы
     std::vector<double> angles;
     for (size_t i = 1; i < path.size(); ++i) {
         int dy = path[i].y - path[i-1].y;
@@ -363,7 +360,6 @@ void computeSmoothness(const std::vector<Cell> &path,
         GP = SUP / (double)(angles.size() - 1);
     }
 
-    // Кривизна пути (по дискретной формуле)
     for (size_t i = 1; i + 1 < path.size(); ++i) {
         double x_im1 = path[i-1].x;
         double y_im1 = path[i-1].y;
@@ -428,9 +424,8 @@ void computeObstacleDistances(const std::vector<std::string> &grid,
 
 // --------- Точность эвристики (RMSE) ---------
 
-// Dijkstra от цели ко всем клеткам + сравнение h(n) и истинной стоимости
-static double computeHeuristicErrorInternal(const std::vector<std::string> &grid,
-                                            Cell goal) {
+double computeHeuristicError(const std::vector<std::string> &grid,
+                             Cell goal) {
     int h = (int)grid.size();
     if (h == 0) return 0.0;
     int w = (int)grid[0].size();
@@ -473,7 +468,7 @@ static double computeHeuristicErrorInternal(const std::vector<std::string> &grid
     for (int y = 0; y < h; ++y) {
         for (int x = 0; x < w; ++x) {
             if (!isFree(grid, y, x)) continue;
-            if (dist[y][x] >= INF/2) continue; // недостижимо
+            if (dist[y][x] >= INF/2) continue;
 
             double hVal = heuristic(y, x, goal.y, goal.x);
             double trueCost = dist[y][x];
@@ -493,6 +488,7 @@ void fillMetrics(const std::vector<std::string> &grid,
                  Cell start, Cell goal,
                  const std::vector<Cell> &finalPath,
                  int closedCount,
+                 double heurError,
                  PathMetrics &m) {
     m.closedCount = closedCount;
     m.L_found = pathLength(finalPath);
@@ -528,14 +524,15 @@ void fillMetrics(const std::vector<std::string> &grid,
 
     computeSmoothness(finalPath, m.SUP, m.GP, m.curvature);
     computeObstacleDistances(grid, finalPath, m.minObsDist, m.avgObsDist);
-    m.heurError = computeHeuristicErrorInternal(grid, goal);
+    m.heurError = heurError;
 }
 
 // --------- Сохранение метрик в CSV ---------
 
 void saveMetricsToCsv(const std::string &algorithmName,
                       int h, int w,
-                      const PathMetrics &m) {
+                      const PathMetrics &m,
+                      int runIndex) {
     namespace fs = std::filesystem;
     fs::create_directories("data/csv");
 
@@ -549,7 +546,7 @@ void saveMetricsToCsv(const std::string &algorithmName,
     }
 
     if (needHeader) {
-        out << "algorithm,height,width,"
+        out << "algorithm,runIndex,height,width,"
             << "L_found,L_opt,KO,OO_percent,"
             << "closedCount,EP,FV,"
             << "SUP,GP,"
@@ -558,6 +555,7 @@ void saveMetricsToCsv(const std::string &algorithmName,
     }
 
     out << algorithmName << ","
+        << runIndex << ","
         << h << "," << w << ","
         << m.L_found << "," << m.L_opt << ","
         << m.KO << "," << m.OO_percent << ","
