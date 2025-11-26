@@ -8,6 +8,7 @@
 ## ▶️ Запуск проекта
 
 Полная команда сборки, запуска алгоритма и построения визуализации в одну строку:
+
 Если выбирать в терминале вариант 1:
 ```bash
 rm -rf build && rm -rf data && cmake -B build && cmake --build build && ./build/lab8 | tee build/run_output.txt && python3 .py/save_run_log_from_build.py && python3 .py/plot_forest_path.py
