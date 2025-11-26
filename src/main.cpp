@@ -39,15 +39,19 @@ int main() {
     std::vector<Cell> smooth;
     int closedCount = 0;
     bool ok = false;
+    std::string algorithmName;
 
     if (choice == 1) {
+        algorithmName = "A*";
         ok = aStar(grid, start, goal, path, closedCount);
     } else if (choice == 2) {
+        algorithmName = "A*PS";
         ok = aStar(grid, start, goal, path, closedCount);
         if (ok) {
             smoothPath(grid, path, smooth);
         }
     } else if (choice == 3) {
+        algorithmName = "Theta*";
         ok = thetaStar(grid, start, goal, path, closedCount);
     } else {
         std::cout << "Неизвестный вариант.\n";
@@ -59,25 +63,52 @@ int main() {
         return 0;
     }
 
+    // Выбираем финальный путь (для A*PS — уже сглаженный)
+    const std::vector<Cell> &finalPath =
+        (choice == 2 ? smooth : path);
+
+    double L_found = pathLength(finalPath);
+
     if (choice == 2) {
         std::cout << "Исходный путь: " << path.size()
                   << " точек, длина = " << pathLength(path) << "\n";
         std::cout << "После сглаживания: " << smooth.size()
-                  << " точек, длина = " << pathLength(smooth) << "\n";
+                  << " точек, длина = " << L_found << "\n";
         std::cout << "Количество раскрытых узлов (A*): " << closedCount << "\n\n";
-
-        printMapWithPath(grid, smooth);
-        // сохраняем карту и сглаженный путь в CSV
-        saveMapAndPathToCsv(grid, smooth, "forest_path.csv");
+        printMapWithPath(grid, finalPath);
     } else {
-        std::cout << "Длина пути (клетки): " << path.size()
-                  << ", геометрическая длина = " << pathLength(path) << "\n";
+        std::cout << "Длина пути (клетки): " << finalPath.size()
+                  << ", геометрическая длина = " << L_found << "\n";
         std::cout << "Количество раскрытых узлов: " << closedCount << "\n\n";
-
-        printMapWithPath(grid, path);
-        // сохраняем карту и путь в CSV
-        saveMapAndPathToCsv(grid, path, "forest_path.csv");
+        printMapWithPath(grid, finalPath);
     }
+
+    // Сохраняем карту и путь в CSV
+    saveMapAndPathToCsv(grid, finalPath, "forest_path.csv");
+
+    // Считаем все метрики по ТЗ
+    PathMetrics metrics{};
+    fillMetrics(grid, start, goal, finalPath, closedCount, metrics);
+
+    // Выводим метрики в консоль
+    std::cout << "\n=== Метрики маршрута ===\n";
+    std::cout << "Алгоритм: " << algorithmName << "\n";
+    std::cout << "Оптимальная длина пути (Dijkstra): " << metrics.L_opt << "\n";
+    std::cout << "Найденная длина пути:            " << metrics.L_found << "\n";
+    std::cout << "Коэффициент оптимальности KO:    " << metrics.KO << "\n";
+    std::cout << "Отклонение от оптимального OO%:  " << metrics.OO_percent << " %\n";
+    std::cout << "Раскрытых узлов:                 " << metrics.closedCount << "\n";
+    std::cout << "Эффективность EP:                " << metrics.EP << "\n";
+    std::cout << "Фактор ветвления FV:             " << metrics.FV << "\n";
+    std::cout << "Суммарный угол поворотов SUP:    " << metrics.SUP << "\n";
+    std::cout << "Гладкость пути GP:               " << metrics.GP << "\n";
+    std::cout << "Мин. расстояние до препятствий:  " << metrics.minObsDist << "\n";
+    std::cout << "Сред. расстояние до препятствий: " << metrics.avgObsDist << "\n";
+
+    // Сохраняем метрики в CSV
+    saveMetricsToCsv(algorithmName, h, w, metrics);
+
+    std::cout << "\nМетрики сохранены в data/csv/metrics.csv\n";
 
     return 0;
 }
