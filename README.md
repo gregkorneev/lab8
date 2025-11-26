@@ -9,17 +9,17 @@
 
 Полная команда сборки, запуска алгоритма и построения визуализации в одну строку:
 
-Если выбирать в терминале вариант 1:
+Если выбирать в терминале вариант 1 — Один запуск (интерактивный)1:
 ```bash
 rm -rf build && rm -rf data && cmake -B build && cmake --build build && ./build/lab8 | tee build/run_output.txt && python3 .py/save_run_log_from_build.py && python3 .py/plot_forest_path.py
 
 ```
-Если выбирать в терминале вариант 2:
+Если выбирать в терминале вариант 2 — Серия запусков на случайных картах (статистика):
 ```bash
 rm -rf build && rm -rf data && cmake -B build && cmake --build build && ./build/lab8 | tee build/run_output.txt && python3 .py/save_run_log_from_build.py && python3 .py/plot_series_metrics.py
 
 ```
-Если выбирать в терминале вариант 3:
+Если выбирать в терминале вариант 3 — Тестирование на заранее заданных картах (open field, лабиринт, и др.):
 ```bash
 rm -rf build && rm -rf data && cmake -B build && cmake --build build && ./build/lab8 | tee build/run_output.txt && python3 .py/save_run_log_from_build.py && python3 .py/plot_scenario_metrics.py
 
