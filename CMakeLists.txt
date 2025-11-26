@@ -9,7 +9,9 @@ add_executable(lab8
     src/main.cpp
     src/grid.cpp
     src/pathfinding.cpp
+    src/scenarios.cpp
 )
+
 
 # говорить компилятору, где лежат заголовки
 target_include_directories(lab8 PRIVATE

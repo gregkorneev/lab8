@@ -4,6 +4,7 @@
 
 #include "grid.h"
 #include "pathfinding.h"
+#include "scenarios.h"
 
 // Прототипы
 void run_single();
@@ -15,7 +16,8 @@ int main() {
 
     std::cout << "Режим работы:\n";
     std::cout << "1 — Один запуск (интерактивный)\n";
-    std::cout << "2 — Серия запусков (статистика по 4–5+ картам)\n";
+    std::cout << "2 — Серия запусков на случайных картах (статистика)\n";
+    std::cout << "3 — Тестирование на заранее заданных картах (open field, лабиринт, и др.)\n";
     std::cout << "Выберите режим: ";
 
     int mode = 0;
@@ -28,6 +30,8 @@ int main() {
         run_single();
     } else if (mode == 2) {
         run_batch();
+    } else if (mode == 3) {
+        run_predefined_scenarios();
     } else {
         std::cout << "Неизвестный режим.\n";
     }
@@ -109,7 +113,7 @@ void run_single() {
     saveMetricsToCsv(name, h, w, m, 1);
 }
 
-// ------------------ СЕРИЯ ЗАПУСКОВ ------------------
+// ------------------ СЕРИЯ ЗАПУСКОВ НА СЛУЧАЙНЫХ КАРТАХ ------------------
 
 void run_batch() {
     int h, w;
@@ -151,7 +155,7 @@ void run_batch() {
             const auto &finalPath = (alg == 2 ? smooth : path);
 
             PathMetrics m{};
-            double heurErr = 0.0; // В СЕРИИ НЕ СЧИТАЕМ RMSE — ТОЛЬКО ОСНОВНЫЕ МЕТРИКИ
+            double heurErr = 0.0; // в серии эвристику не считаем, только базовые метрики
             fillMetrics(grid, start, goal, finalPath, closed, heurErr, m);
 
             std::cout << "  [" << name << "] "
