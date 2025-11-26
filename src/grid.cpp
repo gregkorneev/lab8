@@ -3,121 +3,80 @@
 #include <random>
 #include <fstream>
 #include <filesystem>
+#include <chrono>
 
-// Проверка выхода за границы
+// проверка выхода за границы
 bool inBounds(int y, int x, int h, int w) {
     return y >= 0 && y < h && x >= 0 && x < w;
 }
 
-// Клетка проходима?
+// клетка проходима?
 bool isFree(const std::vector<std::string> &grid, int y, int x) {
     char c = grid[y][x];
     return c == '.' || c == 'S' || c == 'G';
 }
 
-// Генерация случайной карты леса при пожаре
+// генерация карты
 void generateRandomMap(int h, int w,
                        std::vector<std::string> &grid,
                        Cell &start, Cell &goal)
 {
-    // Изначально вся карта свободна
     grid.assign(h, std::string(w, '.'));
 
-    // Старт и цель в противоположных углах
-    start.y = 0;
-    start.x = 0;
-    goal.y  = h - 1;
-    goal.x  = w - 1;
+    start.y = 0; start.x = 0;
+    goal.y  = h - 1; goal.x = w - 1;
 
     grid[start.y][start.x] = 'S';
     grid[goal.y][goal.x]   = 'G';
 
-    // Плотность огня/зарослей
-    double fireProb  = 0.15;   // вероятность очага пожара
-    double bushProb  = 0.10;   // вероятность непроходимых зарослей
-    double blockProb = fireProb + bushProb; // итоговая доля препятствий
+    double fireProb  = 0.15;
+    double bushProb  = 0.10;
+    double blockProb = fireProb + bushProb;
 
-    std::random_device rd;
-    std::mt19937 rng(rd());
+    auto seed = static_cast<unsigned long long>(
+        std::chrono::high_resolution_clock::now().time_since_epoch().count()
+    );
+    std::mt19937 rng(seed);
+
     std::uniform_real_distribution<double> dist(0.0, 1.0);
 
-    for (int y = 0; y < h; ++y) {
-        for (int x = 0; x < w; ++x) {
-            // Не блокируем старт и цель
-            if ((y == start.y && x == start.x) ||
-                (y == goal.y  && x == goal.x)) {
-                continue;
-            }
-
-            double r = dist(rng);
-            if (r < blockProb) {
-                grid[y][x] = '#'; // огонь/заросли (непроходимо)
-            }
-        }
-    }
-    // ВАЖНО: здесь ничего не печатаем.
-    // Печать карты делается в main.cpp (run_single / run_batch),
-    // чтобы не забивать вывод при серии запусков.
+    for (int y = 0; y < h; ++y)
+        for (int x = 0; x < w; ++x)
+            if (!(y == start.y && x == start.x) &&
+                !(y == goal.y  && x == goal.x))
+                if (dist(rng) < blockProb)
+                    grid[y][x] = '#';
 }
 
-// Печать карты с отмеченным путём
 void printMapWithPath(std::vector<std::string> grid,
                       const std::vector<Cell> &path)
 {
-    for (const auto &c : path) {
-        int y = c.y;
-        int x = c.x;
-        if (grid[y][x] == 'S' || grid[y][x] == 'G')
-            continue;
-        grid[y][x] = '*';
+    for (auto &c : path) {
+        if (grid[c.y][c.x] == 'S' || grid[c.y][c.x] == 'G') continue;
+        grid[c.y][c.x] = '*';
     }
 
-    std::cout << "Карта ( '*' — найденный безопасный путь через лес ):\n";
-    for (const auto &row : grid) {
-        std::cout << row << "\n";
-    }
+    for (auto &r : grid) std::cout << r << "\n";
 }
 
-// Сохранение карты и пути в CSV
 void saveMapAndPathToCsv(const std::vector<std::string> &grid,
                          const std::vector<Cell> &path,
                          const std::string &filename)
 {
     namespace fs = std::filesystem;
-
-    int h = (int)grid.size();
-    if (h == 0) return;
-    int w = (int)grid[0].size();
-
-    // Помечаем клетки, которые лежат на пути
-    std::vector<std::vector<int>> onPath(h, std::vector<int>(w, 0));
-    for (const auto &c : path) {
-        if (c.y >= 0 && c.y < h && c.x >= 0 && c.x < w) {
-            onPath[c.y][c.x] = 1;
-        }
-    }
-
-    // Создаём каталоги data/csv
     fs::create_directories("data/csv");
 
-    std::string fullName = "data/csv/" + filename;
-    std::ofstream out(fullName);
-    if (!out.is_open()) {
-        std::cerr << "Не удалось открыть файл для записи: " << fullName << "\n";
-        return;
-    }
+    int h = grid.size(), w = grid[0].size();
+    std::vector<std::vector<int>> mark(h, std::vector<int>(w, 0));
 
-    // Заголовок
+    for (auto &c : path)
+        if (c.y >= 0 && c.y < h && c.x >= 0 && c.x < w)
+            mark[c.y][c.x] = 1;
+
+    std::ofstream out("data/csv/" + filename);
     out << "row,col,cell,is_path\n";
 
-    // Строки таблицы
-    for (int y = 0; y < h; ++y) {
-        for (int x = 0; x < w; ++x) {
-            char cell = grid[y][x]; // '.', '#', 'S', 'G'
-            int isP   = onPath[y][x]; // 0 или 1
-            out << y << "," << x << "," << cell << "," << isP << "\n";
-        }
-    }
-
-    std::cout << "\nРезультат сохранён в CSV: " << fullName << "\n";
+    for (int y = 0; y < h; ++y)
+        for (int x = 0; x < w; ++x)
+            out << y << "," << x << "," << grid[y][x] << "," << mark[y][x] << "\n";
 }
