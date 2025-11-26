@@ -13,15 +13,17 @@
 ```bash
 rm -rf build && rm -rf data && cmake -B build && cmake --build build && ./build/lab8 | tee build/run_output.txt && python3 .py/save_run_log_from_build.py && python3 .py/plot_forest_path.py
 
-
 ```
 Если выбирать в терминале вариант 2:
 ```bash
 rm -rf build && rm -rf data && cmake -B build && cmake --build build && ./build/lab8 | tee build/run_output.txt && python3 .py/save_run_log_from_build.py && python3 .py/plot_series_metrics.py
 
+```
+Если выбирать в терминале вариант 3:
+```bash
+rm -rf build && rm -rf data && cmake -B build && cmake --build build && ./build/lab8 | tee build/run_output.txt && python3 .py/save_run_log_from_build.py && python3 .py/plot_scenario_metrics.py
 
 ```
-
 ---
 
 ## 📌 Описание проекта
